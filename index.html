@@ -19,32 +19,62 @@ function initMap() {
 //use a constructor to create a new map JS object
   map = new google.maps.Map(document.getElementById('map'), {
     center: {lat: 40.7413549, lng: -73.99802439999996},
-    zoom: 14
+    zoom: 13
   });
-  //single latlng object
-  var singleLatLng = new google.maps.LatLng(40.7413549,-73.99802439999996);
-  
-  //single marker appearing on initialize
-  var marker = new google.maps.Marker({
-    position: singleLatLng,
-    map: map,
-    title: 'First Marker!'
-  });
-  
-  //single infowindow
-  var infowindow = new google.maps.InfoWindow({
-    content: 'Do you ever feel like an InfoWindow, floating through the wind, ready to start again…'
-  });
-  
-  marker.addListener('click', function() {
-	    infowindow.open(map, marker);
-	  });
-}
 
+  //new array of locations: in the array, these are the values:
+  //0: title
+  //1: LatLng
+  //2: ID
+ var locationArray = [ 
+    ['Park Ave Penthouse', {lat:40.76344599999999, lng:-73.9686686}, 1],
+    ['Chelsea Loft',  {lat:40.7452994, lng:-73.99848320000001}, 2],
+    ['Union Square Open Floor Plan', {lat:40.7342965, lng:-73.9912195}, 3],
+    ['East Village Hip Studio', {lat:40.7273179, lng:-73.98595999999998}, 4],
+    ['SOHO Artsy Bachelor Pad', {lat:40.7228715, lng:-74.00158249999998}, 5],
+    ['Chinatown Homey Space', {lat:40.7180628, lng:-73.9961237}, 6],       
+];
+ 
+  //new blank array for all the markers
+  var markers = [];
+  
+  //create couter variable
+  var i;
+  var position;
+  var title;
+  for (i = 0; i < locationArray.length; i++) {
+    position = locationArray[i][1];
+    title = locationArray[i][0];
+    //create a marker per location, and put into markers array
+    marker = new google.maps.Marker({
+      position: position,
+      title:title,
+      map: map,
+      animation: google.maps.Animation.DROP
+    });
+    //push the marker to our array of markers
+    markers.push(marker);
+    //create an onclick event to open an infowindow at each marker using this
+    marker.addListener('click', function() {
+      infowindow = new google.maps.InfoWindow({
+        content: "Listing: "+this.title
+      });
+      infowindow.open(map, this);
+    });
+  }
+  
+  //Now extend the bounds to fit all the points
+  var latlngbounds = new google.maps.LatLngBounds();
+	for (i = 0; i < markers.length; i++) {
+		latlngbounds.extend(markers[i].position);
+	}
+	map.fitBounds(latlngbounds);
+  }
+
+      
     </script>
     <script async defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&callback=initMap">
     </script>
   </body>
 </html>
-
