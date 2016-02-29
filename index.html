@@ -18,9 +18,27 @@ var map;
 function initMap() {
 //use a constructor to create a new map JS object
   map = new google.maps.Map(document.getElementById('map'), {
-    center: {lat: 40.7413549, lng: -74.00320290000002},
+    center: {lat: 40.7413549, lng: -73.99802439999996},
     zoom: 14
   });
+  //single latlng object
+  var singleLatLng = new google.maps.LatLng(40.7413549,-73.99802439999996);
+  
+  //single marker appearing on initialize
+  var marker = new google.maps.Marker({
+    position: singleLatLng,
+    map: map,
+    title: 'First Marker!'
+  });
+  
+  //single infowindow
+  var infowindow = new google.maps.InfoWindow({
+    content: 'Do you ever feel like an InfoWindow, floating through the wind, ready to start again…'
+  });
+  
+  marker.addListener('click', function() {
+	    infowindow.open(map, marker);
+	  });
 }
 
     </script>
