@@ -28,18 +28,24 @@
  		
       #map { height: 100%; 
       
-      
-      
+      }
+      #toggledrawing {
+        position: absolute;
+        top:10px;
+        right: 10px;
+        z-index:10;
+        
       }
     </style>
   </head>
   <body>
-  <!-- create a place to put the map -->
+   <input id="toggledrawing"  type=button value="Drawing Tools">
      <div class="floatingbox">
     <h1> My Super Cool Site </h1>
      <input id="showListings" type=button value="Show Listings">
      <input id="hideListings" type=button value="Hide Listings">
     </div>
+     <!-- create a place to put the map -->
     <div id="map"></div>
     <script type="text/javascript">
     
@@ -257,6 +263,11 @@ var styles = [
   document.getElementById('hideListings').addEventListener('click', function() {
 	  hideListings();
   });
+  
+    //putting an event listener on the drawing tools button
+  document.getElementById('toggledrawing').addEventListener('click', function() {
+	  toggleDrawing(drawingManager);
+  });
 
   //new array of locations: in the array, these are the values:
   //0: title
@@ -296,13 +307,18 @@ var styles = [
   for (i = 0; i < locationArray.length; i++) {
     position = locationArray[i][1];
     title = locationArray[i][0];
-    //create a marker per location, and put into markers array. include ID for use later
+    //create a marker per location, and put into markers array
     marker = new google.maps.Marker({
       position: position,
       title:title,
       animation: google.maps.Animation.DROP,
       icon: markerImage,
-      id: locationArray[i][2]
+      id: locationArray[i][2],
+      // Attributions help users find your site again.
+      attribution: {
+            source: 'Google Maps JavaScript API',
+            webUrl: 'https://developers.google.com/maps/'
+          }
     });
     //push the marker to our array of markers
     markers.push(marker);
@@ -322,7 +338,32 @@ var styles = [
     
     //declaring a global variable for streetViewService
     var streetViewService;
- 
+    
+    //initialize the drawing manager
+     var drawingManager = new google.maps.drawing.DrawingManager({
+          drawingMode: google.maps.drawing.OverlayType.MARKER,
+          drawingControl: true,
+          drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: [
+              google.maps.drawing.OverlayType.MARKER,
+              google.maps.drawing.OverlayType.CIRCLE,
+              google.maps.drawing.OverlayType.POLYGON,
+              google.maps.drawing.OverlayType.POLYLINE,
+              google.maps.drawing.OverlayType.RECTANGLE
+            ]
+          },
+          markerOptions: {icon: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png'},
+          circleOptions: {
+            fillColor: '#ffff00',
+            fillOpacity: 1,
+            strokeWeight: 5,
+            clickable: false,
+            editable: true,
+            zIndex: 1
+          }
+        });
+
   }
   //end of initialize function
   
@@ -340,7 +381,6 @@ var styles = [
    	     if (status == google.maps.StreetViewStatus.OK) {
     			 var nearStreetViewLocation = data.location.latLng;
     			 var heading = google.maps.geometry.spherical.computeHeading(nearStreetViewLocation, marker.position);
-    			 //create an ID so that we can enumerate HTML IDs, in case multiple infowindows are open at once
     			 var panoid = "pano"+marker.id;
     			 infowindow.setContent('<div>'+marker.title+'</div>'+
  	    	    	    '<div id="'+panoid+'" style="width:200px;height:200px;"></div></div>');
@@ -374,7 +414,7 @@ var styles = [
 	}
 	map.fitBounds(latlngbounds);
   };
-  
+   
   //sets the map on all the markers in the array to NULL
    function hideListings(){
     for (var i = 0; i < markers.length; i++) {
@@ -382,13 +422,20 @@ var styles = [
 	}
   };
 
-
+    function toggleDrawing(drawingManager){
+       if (drawingManager.map == map) {
+         drawingManager.setMap(null);
+       }
+      else drawingManager.setMap(map);
+      
+    }
+ 
 }
-
+ 
       
     </script>
     <script async defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&libraries=geometry&callback=initMap">
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&libraries=geometry,drawing&callback=initMap">
     </script>
   </body>
 </html>
