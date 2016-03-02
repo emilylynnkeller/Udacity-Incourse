@@ -263,9 +263,9 @@ var styles = [
   //1: LatLng
   //2: ID
  var locationArray = [ 
-    ['Park Ave Penthouse', {lat:40.76344599999999, lng:-73.9686686}, 1],
-    ['Chelsea Loft',  {lat:40.7452994, lng:-73.99848320000001}, 2],
-    ['Union Square Open Floor Plan', {lat:40.7342965, lng:-73.9912195}, 3],
+    ['Park Ave Penthouse', {lat:40.7713024, lng:-73.9632393}, 1],
+    ['Chelsea Loft',  {lat:40.7444883, lng:-73.99494649999997}, 2],
+    ['Union Square Open Floor Plan', {lat:40.73470620000001, lng:-73.98957589999998}, 3],
     ['East Village Hip Studio', {lat:40.7281777, lng:-73.984377}, 4],
     ['TriBeCa Artsy Bachelor Pad', {lat:40.7195264, lng:-74.00899340000001}, 5],
     ['Chinatown Homey Space', {lat:40.7180628, lng:-73.9961237}, 6],       
@@ -296,12 +296,13 @@ var styles = [
   for (i = 0; i < locationArray.length; i++) {
     position = locationArray[i][1];
     title = locationArray[i][0];
-    //create a marker per location, and put into markers array
+    //create a marker per location, and put into markers array. include ID for use later
     marker = new google.maps.Marker({
       position: position,
       title:title,
       animation: google.maps.Animation.DROP,
-      icon: markerImage
+      icon: markerImage,
+      id: locationArray[i][2]
     });
     //push the marker to our array of markers
     markers.push(marker);
@@ -327,7 +328,7 @@ var styles = [
   
  //adding the populate infowindow function
   function populateInfoWindow(marker){
-    streetViewService = new google.maps.StreetViewService();
+    var streetViewService = new google.maps.StreetViewService();
     var radius = 50;
     infowindow = new google.maps.InfoWindow();
     //now i'm calling streetview service, and telling it to get the closest streetview image within 20 meters of the markers position. I'm including a handler in case it doesn't find one.
@@ -339,9 +340,10 @@ var styles = [
    	     if (status == google.maps.StreetViewStatus.OK) {
     			 var nearStreetViewLocation = data.location.latLng;
     			 var heading = google.maps.geometry.spherical.computeHeading(nearStreetViewLocation, marker.position);
-    			 var panorama = map.getStreetView();
+    			 //create an ID so that we can enumerate HTML IDs, in case multiple infowindows are open at once
+    			 var panoid = "pano"+marker.id;
     			 infowindow.setContent('<div>'+marker.title+'</div>'+
- 	    	    	    '<div id="pano" style="width:200px;height:200px;"></div></div>');
+ 	    	    	    '<div id="'+panoid+'" style="width:200px;height:200px;"></div></div>');
     			 var panoramaOptions = {
     				position: nearStreetViewLocation,
     				pov: {
@@ -350,7 +352,7 @@ var styles = [
     				}
     			 };
     			 
-    			 var panorama = new  google.maps.StreetViewPanorama(document.getElementById('pano'),panoramaOptions);
+    			 var panorama = new  google.maps.StreetViewPanorama(document.getElementById(panoid),panoramaOptions);
 				 } 
           else {
    			     radius += 50;
@@ -359,7 +361,7 @@ var styles = [
 		}; //END OF HANDLER FUNCTION
  
       infowindow.open(map, marker);
-    
+     
   }
       
   
@@ -386,7 +388,7 @@ var styles = [
       
     </script>
     <script async defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&callback=initMap">
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&libraries=geometry&callback=initMap">
     </script>
   </body>
 </html>
