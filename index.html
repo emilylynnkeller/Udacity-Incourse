@@ -15,7 +15,7 @@
         padding: 5px;
         border: 1px solid #999;
         text-align: center;
-        line-height: 30px;
+        line-height: 30px; 
         padding-left: 10px;
       }
       
@@ -266,8 +266,8 @@ var styles = [
     ['Park Ave Penthouse', {lat:40.76344599999999, lng:-73.9686686}, 1],
     ['Chelsea Loft',  {lat:40.7452994, lng:-73.99848320000001}, 2],
     ['Union Square Open Floor Plan', {lat:40.7342965, lng:-73.9912195}, 3],
-    ['East Village Hip Studio', {lat:40.7273179, lng:-73.98595999999998}, 4],
-    ['SOHO Artsy Bachelor Pad', {lat:40.7228715, lng:-74.00158249999998}, 5],
+    ['East Village Hip Studio', {lat:40.7281777, lng:-73.984377}, 4],
+    ['TriBeCa Artsy Bachelor Pad', {lat:40.7195264, lng:-74.00899340000001}, 5],
     ['Chinatown Homey Space', {lat:40.7180628, lng:-73.9961237}, 6],       
 ];
  
@@ -289,7 +289,7 @@ var styles = [
         new google.maps.Point(10, 34));
   
   
-  //create couter variable
+  //create counter variable
   var i;
   var position;
   var title;
@@ -307,10 +307,8 @@ var styles = [
     markers.push(marker);
     //create an onclick event to open an infowindow at each marker using this
     marker.addListener('click', function() {
-      infowindow = new google.maps.InfoWindow({
-        content: "Listing: "+this.title
-      });
-      infowindow.open(map, this);
+      //taking this out of initialize since i'm making it a bigger function
+      populateInfoWindow(this);
     });
     
     marker.addListener('mouseover', function() {
@@ -320,7 +318,48 @@ var styles = [
         marker.addListener('mouseout', function() {
       this.setIcon(markerImage);
       });
+    
+    //declaring a global variable for streetViewService
+    var streetViewService;
  
+  }
+  //end of initialize function
+  
+ //adding the populate infowindow function
+  function populateInfoWindow(marker){
+    streetViewService = new google.maps.StreetViewService();
+    var radius = 50;
+    infowindow = new google.maps.InfoWindow();
+    //now i'm calling streetview service, and telling it to get the closest streetview image within 20 meters of the markers position. I'm including a handler in case it doesn't find one.
+    streetViewService.getPanoramaByLocation(marker.position, radius, handler);
+    
+ 
+    //in case the statis is OK, which means the pano was found, we will get compute the position of the streetview image, then calculate the heading, then get a panorama from that and set the options
+    function handler(data, status) {
+   	     if (status == google.maps.StreetViewStatus.OK) {
+    			 var nearStreetViewLocation = data.location.latLng;
+    			 var heading = google.maps.geometry.spherical.computeHeading(nearStreetViewLocation, marker.position);
+    			 var panorama = map.getStreetView();
+    			 infowindow.setContent('<div>'+marker.title+'</div>'+
+ 	    	    	    '<div id="pano" style="width:200px;height:200px;"></div></div>');
+    			 var panoramaOptions = {
+    				position: nearStreetViewLocation,
+    				pov: {
+    					heading: heading,
+    					pitch:30
+    				}
+    			 };
+    			 
+    			 var panorama = new  google.maps.StreetViewPanorama(document.getElementById('pano'),panoramaOptions);
+				 } 
+          else {
+   			     radius += 50;
+    			 streetViewService.getPanoramaByLocation(latLng, radius, handler);
+    			  }
+		}; //END OF HANDLER FUNCTION
+ 
+      infowindow.open(map, marker);
+    
   }
       
   
