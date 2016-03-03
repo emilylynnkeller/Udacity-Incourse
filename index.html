@@ -53,9 +53,12 @@
     
 //create a map variable
 var map;
-//function to initialize the map within the map div
-function initMap() {
-  
+      
+//create a global geocoder variable 
+var geocoder;
+        //new blank array for all the markers
+var markers = [];
+      
 var styles = [
     {
         "featureType": "water",
@@ -249,6 +252,19 @@ var styles = [
         ]
     }
 ]; 
+      
+   //declaring a global variable for  streetViewService
+    var streetViewService;
+  //declaring global drawing manager
+    var drawingManager
+   //create global polygon  to contain polygon to increase control
+    var polygon = null;
+    
+  
+      
+//function to initialize the map within the map div
+function initMap() {
+  
 //use a constructor to create a new map JS object
   map = new google.maps.Map(document.getElementById('map'), {
     center: {lat: 40.7413549, lng: -73.99802439999996},
@@ -273,11 +289,23 @@ var styles = [
   
 
 
-  //new array of locations: in the array, these are the values:
+  //*new array of locations: in the array, these are the values:
   //0: title
-  //1: LatLng
+  //1: Address
   //2: ID
+  /*
  var locationArray = [ 
+    ['Park Ave Penthouse', '775 Park Ave, New York, NY 10021, USA', 1],
+    ['Chelsea Loft', '239 7th Ave, New York, NY 10011, USA', 2],
+    ['Union Square Open Floor Plan', 'Zeckendorf Towers, 4 Union Square E, New York, NY 10003, USA', 3],
+    ['East Village Hip Studio', '150 1st Avenue, New York, NY 10009, USA', 4],
+    ['TriBeCa Artsy Bachelor Pad', '105 Hudson St, New York, NY 10013, USA', 5],
+    ['Chinatown Homey Space', '79 Elizabeth St, New York, NY 10013, USA', 6],       
+];
+  */
+  
+  // Our array using LATLNGS
+   var locationArray = [ 
     ['Park Ave Penthouse', {lat:40.7713024, lng:-73.9632393}, 1],
     ['Chelsea Loft',  {lat:40.7444883, lng:-73.99494649999997}, 2],
     ['Union Square Open Floor Plan', {lat:40.73470620000001, lng:-73.98957589999998}, 3],
@@ -285,9 +313,8 @@ var styles = [
     ['TriBeCa Artsy Bachelor Pad', {lat:40.7195264, lng:-74.00899340000001}, 5],
     ['Chinatown Homey Space', {lat:40.7180628, lng:-73.9961237}, 6],       
 ];
+  
  
-  //new blank array for all the markers
-  var markers = [];
   
   //style the markers a bit
   var markerColor = "0091ff";
@@ -306,10 +333,22 @@ var styles = [
   
   //create counter variable
   var i;
+  //create a blank position;
   var position;
+  //create a blank title;
   var title;
+  
+  //GEOCODING - create a geocoder using the global geocoder variable 
+  geocoder = new google.maps.Geocoder();
+  
+  //and create new address variable
+  var address;
+  
   for (i = 0; i < locationArray.length; i++) {
+    
+    //instead of position, we are going to get the ADDRESS from the locationarray
     position = locationArray[i][1];
+    
     title = locationArray[i][0];
     //create a marker per location, and put into markers array
     marker = new google.maps.Marker({
@@ -339,12 +378,11 @@ var styles = [
         marker.addListener('mouseout', function() { 
       this.setIcon(markerImage);
       });
+  };
     
-    //declaring a global variable for  streetViewService
-    var streetViewService;
-  
+
     //initialize the drawing manager
-     var drawingManager = new google.maps.drawing.DrawingManager({
+         drawingManager = new google.maps.drawing.DrawingManager({
           drawingMode: google.maps.drawing.OverlayType.POLYGON,
           drawingControl: true,
           drawingControlOptions: {
@@ -357,9 +395,7 @@ var styles = [
           },
          
         });
-    //create global polygon  to contain polygon to increase control
-    var polygon = null;
-    
+
     //Add an event listener so that the polygon is captured, and used to call the searhwithinpolygon function
     google.maps.event.addListener(drawingManager, "overlaycomplete", function(event) {
       //first check if there is an existing polygon - if there is, we are going to get rid of it and remove the markers.
@@ -398,7 +434,7 @@ var styles = [
     
     
 
-  }
+ }
   //end of initialize function
   
  //adding the populate infowindow function
@@ -482,9 +518,6 @@ var styles = [
     }
     
   }
-  
- 
-}
  
       
     </script>
