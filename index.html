@@ -28,18 +28,26 @@
  		
       #map { height: 100%; 
       
-      
-      
       }
+      #toggledrawing {
+        position: absolute;
+        top:10px;
+        right: 10px;
+        z-index:10;
+      }
+     
+      
     </style>
   </head>
   <body>
-  <!-- create a place to put the map -->
+   <input id="toggledrawing"  type=button value="Drawing Tools">
+
      <div class="floatingbox">
     <h1> My Super Cool Site </h1>
      <input id="showListings" type=button value="Show Listings">
      <input id="hideListings" type=button value="Hide Listings">
     </div>
+     <!-- create a place to put the map -->
     <div id="map"></div>
     <script type="text/javascript">
     
@@ -257,15 +265,22 @@ var styles = [
   document.getElementById('hideListings').addEventListener('click', function() {
 	  hideListings();
   });
+  
+    //putting an event listener on the drawing tools button
+  document.getElementById('toggledrawing').addEventListener('click', function() {
+	  toggleDrawing(drawingManager);
+  });
+  
+
 
   //new array of locations: in the array, these are the values:
   //0: title
   //1: LatLng
   //2: ID
  var locationArray = [ 
-    ['Park Ave Penthouse', {lat:40.76344599999999, lng:-73.9686686}, 1],
-    ['Chelsea Loft',  {lat:40.7452994, lng:-73.99848320000001}, 2],
-    ['Union Square Open Floor Plan', {lat:40.7342965, lng:-73.9912195}, 3],
+    ['Park Ave Penthouse', {lat:40.7713024, lng:-73.9632393}, 1],
+    ['Chelsea Loft',  {lat:40.7444883, lng:-73.99494649999997}, 2],
+    ['Union Square Open Floor Plan', {lat:40.73470620000001, lng:-73.98957589999998}, 3],
     ['East Village Hip Studio', {lat:40.7281777, lng:-73.984377}, 4],
     ['TriBeCa Artsy Bachelor Pad', {lat:40.7195264, lng:-74.00899340000001}, 5],
     ['Chinatown Homey Space', {lat:40.7180628, lng:-73.9961237}, 6],       
@@ -301,7 +316,13 @@ var styles = [
       position: position,
       title:title,
       animation: google.maps.Animation.DROP,
-      icon: markerImage
+      icon: markerImage,
+      id: locationArray[i][2],
+      // Attributions help users find your site again.
+      attribution: {
+            source: 'Google Maps JavaScript API',
+            webUrl: 'https://developers.google.com/maps/'
+          }
     });
     //push the marker to our array of markers
     markers.push(marker);
@@ -315,19 +336,74 @@ var styles = [
       this.setIcon(favMarkerImage);
       });
     
-        marker.addListener('mouseout', function() {
+        marker.addListener('mouseout', function() { 
       this.setIcon(markerImage);
       });
     
-    //declaring a global variable for streetViewService
+    //declaring a global variable for  streetViewService
     var streetViewService;
- 
+  
+    //initialize the drawing manager
+     var drawingManager = new google.maps.drawing.DrawingManager({
+          drawingMode: google.maps.drawing.OverlayType.POLYGON,
+          drawingControl: true,
+          drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: [
+              
+              google.maps.drawing.OverlayType.POLYGON
+         
+            ]
+          },
+         
+        });
+    //create global polygon  to contain polygon to increase control
+    var polygon = null;
+    
+    //Add an event listener so that the polygon is captured, and used to call the searhwithinpolygon function
+    google.maps.event.addListener(drawingManager, "overlaycomplete", function(event) {
+      //first check if there is an existing polygon - if there is, we are going to get rid of it and remove the markers.
+      if (polygon !== null){
+        polygon.setMap(null);
+        hideListings();
+      }
+            //switching the drawing mode to the HAND (i.e., no longer drawing)
+            drawingManager.setDrawingMode(null);
+      
+            //creating a new editable polygon from the overlay
+            polygon = event.overlay;
+            polygon.setEditable(true);
+         
+     
+            //searching within the polygon 
+            searchWithinPolygon(polygon);
+      
+            //now we want to make sure the search is re-done if the poly is changed
+          
+              google.maps.event.addListener(polygon.getPath(), 'set_at', function() {
+                searchWithinPolygon(polygon);
+              });
+
+              google.maps.event.addListener(polygon.getPath(), 'insert_at', function() {
+                searchWithinPolygon(polygon);
+              });
+      
+          setSelection(polygon);
+      
+      
+            //we also want to make sure if a new polygon is drawn, the old one is deleted
+          
+      
+    });
+    
+    
+
   }
   //end of initialize function
   
  //adding the populate infowindow function
   function populateInfoWindow(marker){
-    streetViewService = new google.maps.StreetViewService();
+    var streetViewService = new google.maps.StreetViewService();
     var radius = 50;
     infowindow = new google.maps.InfoWindow();
     //now i'm calling streetview service, and telling it to get the closest streetview image within 20 meters of the markers position. I'm including a handler in case it doesn't find one.
@@ -339,9 +415,9 @@ var styles = [
    	     if (status == google.maps.StreetViewStatus.OK) {
     			 var nearStreetViewLocation = data.location.latLng;
     			 var heading = google.maps.geometry.spherical.computeHeading(nearStreetViewLocation, marker.position);
-    			 var panorama = map.getStreetView();
+    			 var panoid = "pano"+marker.id;
     			 infowindow.setContent('<div>'+marker.title+'</div>'+
- 	    	    	    '<div id="pano" style="width:200px;height:200px;"></div></div>');
+ 	    	    	    '<div id="'+panoid+'" style="width:200px;height:200px;"></div></div>');
     			 var panoramaOptions = {
     				position: nearStreetViewLocation,
     				pov: {
@@ -350,7 +426,7 @@ var styles = [
     				}
     			 };
     			 
-    			 var panorama = new  google.maps.StreetViewPanorama(document.getElementById('pano'),panoramaOptions);
+    			 var panorama = new  google.maps.StreetViewPanorama(document.getElementById(panoid),panoramaOptions);
 				 } 
           else {
    			     radius += 50;
@@ -359,7 +435,7 @@ var styles = [
 		}; //END OF HANDLER FUNCTION
  
       infowindow.open(map, marker);
-    
+     
   }
       
   
@@ -372,7 +448,7 @@ var styles = [
 	}
 	map.fitBounds(latlngbounds);
   };
-  
+    
   //sets the map on all the markers in the array to NULL
    function hideListings(){
     for (var i = 0; i < markers.length; i++) {
@@ -380,13 +456,40 @@ var styles = [
 	}
   };
 
-
+    function toggleDrawing(drawingManager){
+       if (drawingManager.map == map) {
+         drawingManager.setMap(null);
+         
+         //in case the user drew anything, we'll get rid of the polygon
+         if (polygon !== null){
+            polygon.setMap(null);
+        
+            }
+       }
+      else drawingManager.setMap(map);
+      
+    }
+  //this will hide all markers outside the polygon, and show the ones within it
+  function searchWithinPolygon(polygon) {
+    for (var i=0; i<markers.length; i++){
+      if(google.maps.geometry.poly.containsLocation(markers[i].position, polygon) == true) {
+ markers[i].setMap(map);
+      }
+      else {
+        markers[i].setMap(null);
+      }
+      
+    }
+    
+  }
+  
+ 
 }
-
+ 
       
     </script>
     <script async defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&callback=initMap">
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&libraries=geometry,drawing&callback=initMap">
     </script>
   </body>
 </html>
