@@ -3,30 +3,561 @@
   <head>
   <!-- styles put here, but you can include a CSS file and reference it instead! -->
     <style type="text/css">
-      html, body { height: 100%; margin: 0; padding: 0; }
-      #map { height: 100%; }
+      html, body { height: 100%; margin: 0; padding: 0; font-family: Ariel, Sans-Serif;}
+      
+ 	  .floatingbox {
+ 	    border-radius: 5px;
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        line-height: 30px; 
+        padding-left: 10px;
+        width: 200px;
+      }
+      
+      h1 {
+		font-size: 14px;
+		font-color: Black;
+		margin-bottom:0px;
+        margin-top:0px;
+		}
+ 		
+      #map { height: 100%; 
+      
+      }
+      #toggledrawing {
+        position: absolute;
+        top:10px;
+        right: 10px;
+        z-index:10;
+      }
+      
+      #zoomToAreaText {
+        text-align: left
+        position: relative;
+        left:5px;
+        width: 120px;
+      }
+      
+      #zoomToArea {}
+        width: 50px;
+      }
+     
+      
     </style>
   </head>
   <body>
-  <!-- create a place to put the map -->
+   <input id="toggledrawing"  type=button value="Drawing Tools">
+
+     <div class="floatingbox">
+    <h1> Find Your New NYC Home </h1>
+       <div>
+     <input id="showListings" type=button value="Show Listings" style="left:0px">
+     <input id="hideListings" type=button value="Hide Listings" style="right:0px">
+       </div>
+     <div>
+     <input id="zoomToAreaText"  type=text placeholder="Enter your favorite area!">
+       <input id="zoomToArea"  type=button value="Zoom">
+     </div>
+    </div>
+     <!-- create a place to put the map -->
     <div id="map"></div>
     <script type="text/javascript">
     
 //create a map variable
 var map;
+      
+//new blank array for all the markers
+var markers = [];
+      
+var styles = [
+    {
+        "featureType": "water",
+        "stylers": [
+            {
+                "color": "#19a0d8"
+            }
+        ]
+    },
+    {
+        "featureType": "administrative",
+        "elementType": "labels.text.stroke",
+        "stylers": [
+            {
+                "color": "#ffffff"
+            },
+            {
+                "weight": 6
+            }
+        ]
+    },
+    {
+        "featureType": "administrative",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "color": "#e85113"
+            }
+        ]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry.stroke",
+        "stylers": [
+            {
+                "color": "#efe9e4"
+            },
+            {
+                "lightness": -40
+            }
+        ]
+    },
+    {
+    "featureType": "transit.station",
+    "stylers": [
+      { "weight": 9 },
+      { "hue": "#e85113" }
+    ]
+  },
+    {
+        "featureType": "road",
+        "elementType": "labels.text.stroke",
+        "stylers": [
+            {
+                "lightness": 100
+            }
+        ]
+    },
+    {
+        "featureType": "road",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "lightness": -100
+            }
+        ]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "labels.icon"
+    },
+    {
+        "featureType": "landscape",
+        "elementType": "labels",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
+        "featureType": "landscape",
+        "stylers": [
+            {
+                "lightness": 20
+            },
+            {
+                "color": "#efe9e4"
+            }
+        ]
+    },
+    {
+        "featureType": "landscape.man_made",
+        "stylers": [
+            {
+                "visibility": "off"
+            }
+        ]
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.stroke",
+        "stylers": [
+            {
+                "lightness": 100
+            }
+        ]
+    },
+    {
+        "featureType": "water",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "lightness": -100
+            }
+        ]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels.text.fill",
+        "stylers": [
+            {
+                "hue": "#11ff00"
+            }
+        ]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels.text.stroke",
+        "stylers": [
+            {
+                "lightness": 100
+            }
+        ]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels.icon",
+        "stylers": [
+            {
+                "hue": "#4cff00"
+            },
+            {
+                "saturation": 58
+            }
+        ]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "geometry",
+        "stylers": [
+            {
+                "visibility": "on"
+            },
+            {
+                "color": "#f0e4d3"
+            }
+        ]
+    },
+    {
+        "featureType": "road.highway",
+        "elementType": "geometry.fill",
+        "stylers": [
+            {
+                "color": "#efe9e4"
+            },
+            {
+                "lightness": -25
+            }
+        ]
+    },
+    {
+        "featureType": "road.arterial",
+        "elementType": "geometry.fill",
+        "stylers": [
+            {
+                "color": "#efe9e4"
+            },
+            {
+                "lightness": -10
+            }
+        ]
+    },
+    {
+        "featureType": "poi",
+        "elementType": "labels",
+        "stylers": [
+            {
+                "visibility": "simplified"
+            }
+        ]
+    }
+]; 
+      
+   //declaring a global variable for  streetViewService
+    var streetViewService;
+  //declaring global drawing manager
+    var drawingManager
+   //create global polygon  to contain polygon to increase control
+    var polygon = null;
+    
+  
+      
 //function to initialize the map within the map div
 function initMap() {
+  
 //use a constructor to create a new map JS object
   map = new google.maps.Map(document.getElementById('map'), {
-    center: {lat: 40.7413549, lng: -74.00320290000002},
-    zoom: 14
+    center: {lat: 40.7413549, lng: -73.99802439999996},
+    zoom: 13,
+    styles: styles,
+    mapTypeControl: false
   });
-}
+  
+//create a initialized geocoder variable 
+var geocoder = new google.maps.Geocoder();
+ 
+  
+  //putting an event listener on the showListings button
+  document.getElementById('showListings').addEventListener('click', function()   {
+    showListings();
+  });
+  //putting an event listener on the hideListings button
+  document.getElementById('hideListings').addEventListener('click', function() {
+	  hideListings();
+  });
+  
+    //putting an event listener on the drawing tools button
+  document.getElementById('toggledrawing').addEventListener('click', function() {
+	  toggleDrawing(drawingManager);
+  });
+  
+      //putting an event listener on the zoom to area
+  document.getElementById('zoomToArea').addEventListener('click', function() {
+	zoomToArea(geocoder, map);
+  });
+  
+  
 
+
+  //*new array of locations: in the array, these are the values:
+  //0: title
+  //1: Address
+  //2: ID
+  
+  // Our array using LATLNGS
+   var locationArray = [ 
+    ['Park Ave Penthouse', {lat:40.7713024, lng:-73.9632393}, 1],
+    ['Chelsea Loft',  {lat:40.7444883, lng:-73.99494649999997}, 2],
+    ['Union Square Open Floor Plan', {lat:40.73470620000001, lng:-73.98957589999998}, 3],
+    ['East Village Hip Studio', {lat:40.7281777, lng:-73.984377}, 4],
+    ['TriBeCa Artsy Bachelor Pad', {lat:40.7195264, lng:-74.00899340000001}, 5],
+    ['Chinatown Homey Space', {lat:40.7180628, lng:-73.9961237}, 6],       
+];
+  
+  //style the markers a bit
+  var markerColor = "0091ff";
+  var markerImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + markerColor,
+        new google.maps.Size(21, 34),
+        new google.maps.Point(0,0),
+        new google.maps.Point(10, 34));
+  
+  //create a "favorite location" marker color
+  var favMarkerColor = "FFFF24";
+  var favMarkerImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + favMarkerColor,
+        new google.maps.Size(21, 34),
+        new google.maps.Point(0,0),
+        new google.maps.Point(10, 34));
+  
+  
+  //create counter variable
+  var i;
+  //create a blank position;
+  var position;
+  //create a blank title;
+  var title;
+  
+  for (i = 0; i < locationArray.length; i++) {
+    
+    //get the position from the location array
+    position = locationArray[i][1];
+    
+    title = locationArray[i][0];
+    //create a marker per location, and put into markers array
+    marker = new google.maps.Marker({
+      position: position,
+      title:title,
+      animation: google.maps.Animation.DROP,
+      icon: markerImage,
+      id: locationArray[i][2],
+      // Attributions help users find your site again.
+      attribution: {
+            source: 'Google Maps JavaScript API',
+            webUrl: 'https://developers.google.com/maps/'
+          }
+    });
+    //push the marker to our array of markers
+    markers.push(marker);
+    //create an onclick event to open an infowindow at each marker using this
+    marker.addListener('click', function() {
+      //taking this out of initialize since i'm making it a bigger function
+      populateInfoWindow(this);
+    });
+    
+    marker.addListener('mouseover', function() {
+      this.setIcon(favMarkerImage);
+      });
+    
+        marker.addListener('mouseout', function() { 
+      this.setIcon(markerImage);
+      });
+  };
+    
+
+    //initialize the drawing manager
+         drawingManager = new google.maps.drawing.DrawingManager({
+          drawingMode: google.maps.drawing.OverlayType.POLYGON,
+          drawingControl: true,
+          drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_CENTER,
+            drawingModes: [
+              
+              google.maps.drawing.OverlayType.POLYGON
+         
+            ]
+          },
+         
+        });
+
+    //Add an event listener so that the polygon is captured, and used to call the searhwithinpolygon function
+    google.maps.event.addListener(drawingManager, "overlaycomplete", function(event) {
+      //first check if there is an existing polygon - if there is, we are going to get rid of it and remove the markers.
+      if (polygon !== null){
+        polygon.setMap(null);
+        hideListings();
+      }
+            //switching the drawing mode to the HAND (i.e., no longer drawing)
+            drawingManager.setDrawingMode(null);
+      
+            //creating a new editable polygon from the overlay
+            polygon = event.overlay;
+            polygon.setEditable(true);
+         
+     
+            //searching within the polygon 
+            searchWithinPolygon(polygon);
+      
+            //now we want to make sure the search is re-done if the poly is changed
+          
+              google.maps.event.addListener(polygon.getPath(), 'set_at', function() {
+                searchWithinPolygon(polygon);
+              });
+
+              google.maps.event.addListener(polygon.getPath(), 'insert_at', function() {
+                searchWithinPolygon(polygon);
+              });
+      
+          setSelection(polygon);
+      
+      
+            //we also want to make sure if a new polygon is drawn, the old one is deleted
+          
+      
+    });
+    
+    
+
+ }
+  //end of initialize function
+      
+//all the functions that don't happen on page load, below
+  
+ //adding the populate infowindow function
+  function populateInfoWindow(marker){
+    var streetViewService = new google.maps.StreetViewService();
+    var radius = 50;
+    infowindow = new google.maps.InfoWindow();
+    //now i'm calling streetview service, and telling it to get the closest streetview image within 20 meters of the markers position. I'm including a handler in case it doesn't find one.
+    streetViewService.getPanoramaByLocation(marker.position, radius, handler);
+    
+ 
+    //in case the statis is OK, which means the pano was found, we will get compute the position of the streetview image, then calculate the heading, then get a panorama from that and set the options
+    function handler(data, status) {
+   	     if (status == google.maps.StreetViewStatus.OK) {
+    			 var nearStreetViewLocation = data.location.latLng;
+    			 var heading = google.maps.geometry.spherical.computeHeading(nearStreetViewLocation, marker.position);
+    			 var panoid = "pano"+marker.id;
+    			 infowindow.setContent('<div>'+marker.title+'</div>'+
+ 	    	    	    '<div id="'+panoid+'" style="width:200px;height:200px;"></div></div>');
+    			 var panoramaOptions = {
+    				position: nearStreetViewLocation,
+    				pov: {
+    					heading: heading,
+    					pitch:30
+    				}
+    			 };
+    			 
+    			 var panorama = new  google.maps.StreetViewPanorama(document.getElementById(panoid),panoramaOptions);
+				 } 
+          else {
+   			     radius += 50;
+    			 streetViewService.getPanoramaByLocation(latLng, radius, handler);
+    			  }
+		}; //END OF HANDLER FUNCTION
+ 
+      infowindow.open(map, marker);
+     
+  }
+      
+  
+ // Sets the map on all markers in the array.
+  function showListings(){
+    var latlngbounds = new google.maps.LatLngBounds();
+    for (var i = 0; i < markers.length; i++) {
+      markers[i].setMap(map);
+      latlngbounds.extend(markers[i].position);
+	}
+	map.fitBounds(latlngbounds);
+  };
+    
+  //sets the map on all the markers in the array to NULL
+   function hideListings(){
+    for (var i = 0; i < markers.length; i++) {
+      markers[i].setMap(null);
+	}
+  };
+
+    function toggleDrawing(drawingManager){
+       if (drawingManager.map == map) {
+         drawingManager.setMap(null);
+         
+         //in case the user drew anything, we'll get rid of the polygon
+         if (polygon !== null){
+            polygon.setMap(null);
+        
+            }
+       }
+      else drawingManager.setMap(map);
+      
+    }
+  //this will hide all markers outside the polygon, and show the ones within it
+  function searchWithinPolygon(polygon) {
+    for (var i=0; i<markers.length; i++){
+      if(google.maps.geometry.poly.containsLocation(markers[i].position, polygon) == true) {
+ markers[i].setMap(map);
+      }
+      else {
+        markers[i].setMap(null);
+      }
+      
+    }
+    
+  }
+      
+      
+   function zoomToArea(geocoder, map){
+      var address =  document.getElementById('zoomToAreaText').value;;
+      if (address == ''){
+        
+        alert('You must enter an area, or address.');
+      }
+      else{
+        
+        //here, we will geocode the address/area entered to get the center. Then, we'll center the map on it and zoom. If it's not in NYC, we'll alert the user to keep it within the city.
+        geocoder.geocode(
+          { 'address': address }, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                map.setCenter(results[0].geometry.location);
+                map.setZoom(15);
+            }
+          else{
+            alert("We couldn't find that location - try entering a more specific place.");
+          }
+        });
+      }
+   }
+ 
+
+ 
+      
     </script>
     <script async defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&callback=initMap">
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZ_1EX7cJmIaJu_ZIr46zPZ-HmQIGv7w&libraries=geometry,drawing&callback=initMap">
     </script>
   </body>
 </html>
-
