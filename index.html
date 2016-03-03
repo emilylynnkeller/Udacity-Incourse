@@ -35,19 +35,13 @@
         right: 10px;
         z-index:10;
       }
-      
-      #searchWithinPolygon{
-        position: absolute;
-        top:30px;
-        right: 10px;
-        z-index:10;
-      }
+     
       
     </style>
   </head>
   <body>
    <input id="toggledrawing"  type=button value="Drawing Tools">
-   <input id="searchWithinPolygon"  type=button value="Show Listings Within Shape">
+
      <div class="floatingbox">
     <h1> My Super Cool Site </h1>
      <input id="showListings" type=button value="Show Listings">
@@ -342,34 +336,67 @@ var styles = [
       this.setIcon(favMarkerImage);
       });
     
-        marker.addListener('mouseout', function() {
+        marker.addListener('mouseout', function() { 
       this.setIcon(markerImage);
       });
     
-    //declaring a global variable for streetViewService
+    //declaring a global variable for  streetViewService
     var streetViewService;
-    
+  
     //initialize the drawing manager
      var drawingManager = new google.maps.drawing.DrawingManager({
-          drawingMode: google.maps.drawing.OverlayType.CIRCLE,
+          drawingMode: google.maps.drawing.OverlayType.POLYGON,
           drawingControl: true,
           drawingControlOptions: {
             position: google.maps.ControlPosition.TOP_CENTER,
             drawingModes: [
-              google.maps.drawing.OverlayType.CIRCLE,
-              google.maps.drawing.OverlayType.POLYGON,
-              google.maps.drawing.OverlayType.POLYLINE,
-              google.maps.drawing.OverlayType.RECTANGLE
+              
+              google.maps.drawing.OverlayType.POLYGON
+         
             ]
           },
          
         });
+    //create global polygon  to contain polygon to increase control
+    var polygon = null;
+    
     //Add an event listener so that the polygon is captured, and used to call the searhwithinpolygon function
     google.maps.event.addListener(drawingManager, "overlaycomplete", function(event) {
-            var polygon = event.overlay;
-            //searching within the polygon
+      //first check if there is an existing polygon - if there is, we are going to get rid of it and remove the markers.
+      if (polygon !== null){
+        polygon.setMap(null);
+        hideListings();
+      }
+            //switching the drawing mode to the HAND (i.e., no longer drawing)
+            drawingManager.setDrawingMode(null);
+      
+            //creating a new editable polygon from the overlay
+            polygon = event.overlay;
+            polygon.setEditable(true);
+         
+     
+            //searching within the polygon 
             searchWithinPolygon(polygon);
+      
+            //now we want to make sure the search is re-done if the poly is changed
+          
+              google.maps.event.addListener(polygon.getPath(), 'set_at', function() {
+                searchWithinPolygon(polygon);
+              });
+
+              google.maps.event.addListener(polygon.getPath(), 'insert_at', function() {
+                searchWithinPolygon(polygon);
+              });
+      
+          setSelection(polygon);
+      
+      
+            //we also want to make sure if a new polygon is drawn, the old one is deleted
+          
+      
     });
+    
+    
 
   }
   //end of initialize function
@@ -432,6 +459,12 @@ var styles = [
     function toggleDrawing(drawingManager){
        if (drawingManager.map == map) {
          drawingManager.setMap(null);
+         
+         //in case the user drew anything, we'll get rid of the polygon
+         if (polygon !== null){
+            polygon.setMap(null);
+        
+            }
        }
       else drawingManager.setMap(map);
       
@@ -449,6 +482,7 @@ var styles = [
     }
     
   }
+  
  
 }
  
