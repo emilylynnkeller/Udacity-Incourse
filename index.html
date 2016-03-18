@@ -324,6 +324,18 @@ function initMap() {
     mapTypeControl: false
   });
   
+//create places autocomplete for the Address entry
+var autocomplete = new google.maps.places.Autocomplete(document.getElementById('searchWithinTimeText'));
+  //setting the boundaries within the map
+  autocomplete.bindTo('bounds', map);
+  
+  //create places autocomplete for the neighborhood search:
+
+var autocomplete2 = new google.maps.places.Autocomplete(document.getElementById('zoomToAreaText'));
+  //setting the boundaries within the map
+  autocomplete2.bindTo('bounds', map);
+  
+  
 //create a initialized geocoder variable 
 var geocoder = new google.maps.Geocoder;
 //initializing the distance matrix service
