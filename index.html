@@ -8,6 +8,7 @@
         margin: 0; 
         padding: 0; 
         font-family: Ariel, Sans-Serif;
+      
       }
       
  	  .floatingbox {
@@ -22,7 +23,7 @@
         text-align: center;
         line-height: 30px; 
         padding-left: 10px;
-        width: 220px;
+        width: 300px;
       }
       
       hr.section {
@@ -43,7 +44,8 @@
         margin-top:0px;
 		}
  		
-      #map { height: 100%; 
+      #map { 
+        height: 100%; 
       
       }
       #toggledrawing {
@@ -57,11 +59,22 @@
         text-align: left
         position: relative;
         left:5px;
-        width: 125px;
+        width: 70%;
       }
       
+       #searchWithinTimeText {
+        text-align: left
+        position: relative;
+        width: 80%;
+      }
+      
+      
       #zoomToArea {
-        width: 50px;
+        width: 20%;
+      }
+      
+      #placesSearch {
+        width: 80%;
       }
      
       
@@ -97,7 +110,12 @@
         <span class='text'>of... </span>
         <input id='searchWithinTimeText'  type=text placeholder='Work, Daycare, etc.'>
        <input id='searchWithinTime'  type=button value='Go'>
-     </div>
+     </div><hr class='section'>
+       <div>
+         <span class='text'>Search for nearby places </span>
+        <input id='placesSearch'  type=text placeholder='ex. Pizza delivery in NYC'>
+        <input id='goPlaces'  type=button value='Go'>
+       </div>
     </div>
      <!-- create a place to put the map -->
     <div id='map'></div>
@@ -105,6 +123,7 @@
     
 //create a map variable
 var map;
+
       
 //new blank array for all the markers
 var markers = [];
@@ -267,7 +286,7 @@ var styles = [
                 'color': '#f0e4d3'
             }
         ]
-    },
+    }, 
     {
         'featureType': 'road.highway',
         'elementType': 'geometry.fill',
@@ -309,6 +328,9 @@ var styles = [
     var drawingManager;
    //create global polygon  to contain polygon to increase control
     var polygon = null;
+   //create place variables to use in multiple function
+    var placeSelected = false;
+    var placeMarkers = [];
     
   
       
@@ -326,8 +348,6 @@ function initMap() {
   
 //create places autocomplete for the Address entry
 var autocomplete = new google.maps.places.Autocomplete(document.getElementById('searchWithinTimeText'));
-  //setting the boundaries within the map
-  autocomplete.bindTo('bounds', map);
   
   //create places autocomplete for the neighborhood search:
 
@@ -335,6 +355,21 @@ var autocomplete2 = new google.maps.places.Autocomplete(document.getElementById(
   //setting the boundaries within the map
   autocomplete2.bindTo('bounds', map);
   
+var searchBox = new google.maps.places.SearchBox(document.getElementById('placesSearch'));
+  
+ // Listen for the event fired when the user selects a prediction from the picklist and retrieve more details for that place.
+  
+searchBox.addListener('places_changed', function() {
+    searchBoxPlaces(this);
+  });
+  
+// Listen for the event fired when the user selects a prediction and clicks "go"
+        // more details for that place. 
+
+document.getElementById('goPlaces').addEventListener('click', function() {
+ textSearchPlaces();
+});  
+ 
   
 //create a initialized geocoder variable 
 var geocoder = new google.maps.Geocoder;
@@ -348,7 +383,7 @@ var distanceMatrixService = new google.maps.DistanceMatrixService;
   
   //putting an event listener on the hideListings button
   document.getElementById('hideListings').addEventListener('click', function() {
-	  hideListings();
+	  hideListings(markers);
   });
   
     //putting an event listener on the drawing tools button
@@ -552,7 +587,7 @@ var distanceMatrixService = new google.maps.DistanceMatrixService;
   }
     
   //sets the map on all the markers in the array to NULL
-   function hideListings(){
+   function hideListings(markers){
     for (var i = 0; i < markers.length; i++) {
       markers[i].setMap(null);
 	}
@@ -668,11 +703,11 @@ function searchWithinTime(distanceMatrixService,geocoder,map){
                   if (duration <= maxDuration){
                   //the origin [i] should = the markers[i]
                     markers[i].setMap(map);
-                    count = 1;
+                    count = 1; 
                     //create a mini infowindow to open immediately and contain the distance and duration 
                     var infowindow = new google.maps.InfoWindow({
                       content: durationText + " away, " + distanceText + "<div><input type=\"button\" value=\"View Route\" onclick = \"displayDirections(' " + origins[i] + "');\"></input> </div>"
-                    });
+                    }); 
                     infowindow.open(map,markers[i]);
                     //put this in so that this small window closes if the user clicks the marker
                     google.maps.event.addListener(markers[i], 'click', function () {
@@ -693,7 +728,7 @@ function searchWithinTime(distanceMatrixService,geocoder,map){
 
 }
       
-function displayDirections(origin) {
+function displayDirections(origin, map) {
   hideListings();
  var directionsService = new google.maps.DirectionsService;
   //get the destination address from the user entered value
@@ -708,21 +743,132 @@ function displayDirections(origin) {
     travelMode: google.maps.TravelMode[mode]
   }, function(response, status) {
     if (status === google.maps.DirectionsStatus.OK) {
-      new google.maps.DirectionsRenderer({
+     var directionsDisplay = new google.maps.DirectionsRenderer({
                     map: map,
                     directions: response,
                     draggable: true,
                     polylineOptions: {
-                        strokeColor: "green"
+                        strokeColor: "green" 
                       }
                 });
+      
     } else {
       window.alert('Directions request failed due to ' + status);
     }
+         
   });
+} 
+      
+      
+//this function fires when the user selects a searchbox picklist item
+function  searchBoxPlaces(searchBox){
+hideListings(placeMarkers);
+var places = searchBox.getPlaces();
+
+          // For each place, get the icon, name and location.
+          var bounds = new google.maps.LatLngBounds();
+          places.forEach(function(place) {
+              createMarker(place);
+              if (place.geometry.viewport) {
+                // Only geocodes have viewport.
+                bounds.union(place.geometry.viewport);
+              } else {
+                bounds.extend(place.geometry.location);
+              }
+          });
+          map.fitBounds(bounds);
+  
+         if (places.length == 0) {
+            alert('We did not find any places matching that search!');
+          }
+}  
+      
+//this function firest when the user select "go" on the places search
+function textSearchPlaces(){  
+  hideListings(placeMarkers);
+  var placesService = new google.maps.places.PlacesService(map);
+  bounds=new google.maps.LatLngBounds();
+  placesService.textSearch({
+    query: document.getElementById('placesSearch').value
+  }, function(results, status) {
+  if (status === google.maps.places.PlacesServiceStatus.OK) {
+    for (var i = 0; i < results.length; i++) {
+      var place = results[i];
+      createMarker(place);
+      if (place.geometry.viewport) {
+        // Only geocodes have viewport.
+        bounds.union(place.geometry.viewport);
+      } else {
+        bounds.extend(place.geometry.location);
+      }
+    }
+    map.fitBounds(bounds);
+  }
+});
+      }
+      
+      
+function createMarker(place) {
+ var icon = {
+                url: place.icon,
+                size: new google.maps.Size(35, 35),
+                origin: new google.maps.Point(0, 0),
+                anchor: new google.maps.Point(15, 34),
+                scaledSize: new google.maps.Size(25, 25)
+              };
+
+              // Create a marker for each place.
+              var marker = new google.maps.Marker({
+                map: map,
+                icon: icon,
+                title: place.name,
+                position: place.geometry.location,
+                id: place.id
+              });
+              //if a marker is clicked, do a place details search on it in the next function
+              marker.addListener('click', function() {
+                getPlacesDetails(this, place);
+              });
+              placeMarkers.push(marker);
 }
- 
- 
+      
+      
+      function getPlacesDetails(marker, place){
+       var service = new google.maps.places.PlacesService(map); 
+         service.getDetails({
+            placeId: place.place_id
+            }, function(place, status) {
+              if (status === google.maps.places.PlacesServiceStatus.OK) {
+              var infowindow = new google.maps.InfoWindow(); 
+                // TODO: Add if checks.
+                var innerHTML = ''
+                if (place.formatted_address) {
+                innerHTML +=  '<div><strong>' + place.name + '</strong>';
+                }
+              if (place.formatted_address) {
+                innerHTML += '<br>'+  place.formatted_address;
+              }
+              if (place.formatted_phone_number) {
+               innerHTML += '<br>'+ place.formatted_phone_number;
+              }
+              if (place.opening_hours) {
+              innerHTML += '<br><br><strong>Hours:</strong><br>'+ place.opening_hours.weekday_text[0]+'<br>'+ place.opening_hours.weekday_text[1]+'<br>'+ place.opening_hours.weekday_text[2]+'<br>'+ place.opening_hours.weekday_text[3]+'<br>'+ place.opening_hours.weekday_text[4]+'<br>'+
+place.opening_hours.weekday_text[5]+'<br>'+
+place.opening_hours.weekday_text[6];
+              }
+             if (place.photos[0]) {
+               innerHTML +='<br><br><img src=\"'+place.photos[0].getUrl({maxHeight:100, maxWidth:200})+'\"></div>';
+             }
+              infowindow.setContent(innerHTML);
+              infowindow.open(map, marker);
+              }
+            });
+        
+        
+      }
+
+      
+  
       
     </script>
     <script async defer
